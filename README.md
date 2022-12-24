@@ -1,2 +1,58 @@
 # scientific_reports
-An automate pipeline to generate fold cross validation reports for classification problems
+An automate pipeline to generate k-fold cross validation reports for classification problems
+
+how to use:
+```bash
+import sys
+sys.path.append('<path to scientific_reports>')
+from scientific_reports import scientificReports
+```
+
+create dicts:
+```bash
+model_dict = {
+    'XGBoost' : {
+        'model' : XGBClassifier,
+        'model_params' : {'gamma': 0, 'max_delta_step': 1, 'scale_pos_weight': 110, 'use_label_encoder' : False},
+        'fit_params' : {'eval_metric' : 'error'}
+    },
+    'SVM' : {
+        'model' : SVC,
+        'model_params' : {'C': 100, 'gamma': 'auto', 'kernel': 'rbf'},
+        'fit_params' : {}
+    },
+}
+
+
+ordered_scalers_list = [MinMaxScaler()]
+
+metrics_dict = {
+    'F2-Score' : {
+        'func' : fbeta_score,
+        'params' : {'beta':2}
+    },
+    'Accuracy' : {
+        'func' : accuracy_score,
+        'params' : {}
+    },
+    'Roc-Auc' : {
+        'func' : roc_auc_score,
+        'params' : {}
+    },
+    'G-Mean' : {
+        'func' : geometric_mean_score,
+        'params' : {}
+    },
+    'MCC' : {
+        'func' : matthews_corrcoef,
+        'params' : {}
+    },
+}
+```
+call class:
+
+```bash
+scr = scientificReports(model_dict, metrics_dict, ordered_scalers_list, n_splits=5, n_repeats=3, verbose=1)
+res = scr.run(xData.values, yData, tab='all', save=True)
+res
+```
