@@ -21,6 +21,11 @@ model_dict = {
         'model_params' : {'C': 100, 'gamma': 'auto', 'kernel': 'rbf'},
         'fit_params' : {}
     },
+    'MLP' : {
+        'model' : MLPClassifier,
+        'model_params' : {'input_shape':(xData.shape[1],), 'hidden_layer_units' : [128, 64, 64], 'n_classes':len(np.unique(yData)), 'dropout':0.25},
+        'fit_params' : {'epochs':100, 'learning_rate':'schedule', 'ballence':True}
+    },
 }
 
 
@@ -55,4 +60,10 @@ call class:
 scr = scientificReports(model_dict, metrics_dict, ordered_scalers_list, n_splits=5, n_repeats=3, verbose=1)
 res = scr.run(xData.values, yData, tab='all', save=True)
 res
+```
+
+parameters:
+```bash
+tab: if 'all' reports mean and std of all folds, if 'max' reports highest fold, if int(n) reports mean and std of first n folds.
+save: if true save results as csv in reports directory with specific name.
 ```
