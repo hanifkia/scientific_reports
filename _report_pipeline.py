@@ -3,15 +3,17 @@ import pandas as pd
 import datetime
 import copy
 import os
+from datetime import datetime
 from sklearn.model_selection import RepeatedStratifiedKFold, train_test_split
 
 class scientificReports():
-    def __init__(self, model_dict, metrics_dict, scalers_list = [], n_splits=10, n_repeats=3):
+    def __init__(self, model_dict, metrics_dict, scalers_list = [], n_splits=10, n_repeats=3, verbose=1):
         self.model_dict = model_dict
         self.metrics_dict = metrics_dict
         self.scalers_list = scalers_list
         self.n_splits = n_splits
         self.n_repeats = n_repeats
+        self.verbose = verbose
     
     def __scale__(self, xTrain, xTest):
         for s in self.scalers_list:
@@ -35,7 +37,8 @@ class scientificReports():
         rskf = RepeatedStratifiedKFold(n_splits=self.n_splits, n_repeats=self.n_repeats, random_state=1)
         jj = 1
         for train_index, test_index in rskf.split(X, Y):
-            print(f'*********** fold {self.n_splits*self.n_repeats} / {jj} ***********')
+            if self.verbose == 1:
+                print(f'*********** fold {self.n_splits*self.n_repeats} / {jj} ***********')
             x_train, y_train = X[train_index], Y[train_index]
             x_test, y_test = X[test_index], Y[test_index]
         # for i in range(self.n_splits*self.n_repeats):
@@ -49,7 +52,9 @@ class scientificReports():
             
             # prediction
             for model in self.model_dict.keys():
-                print('[start] ', model)
+                if self.verbose == 1:
+                    start_time = datetime.now().timestamp()
+                    print('[start] ', model)
                 y_pred = self.__try__(x_train, y_train, x_test, self.model_dict[model])
                 #performance
                 if type(y_pred) == dict:
@@ -63,10 +68,10 @@ class scientificReports():
                 else:
                     performance_tuple = (y_test, y_pred)
                     for metric in self.metrics_dict.keys():
-                        res[model][metric].append(self.metrics_dict[metric](*performance_tuple))
+                        res[model][metric].append(self.metrics_dict[metric]['func'](*performance_tuple, **self.metrics_dict[metric]['params']))
                         
-                        
-                print('[finish] ', model, '\n')
+                if self.verbose == 1:      
+                    print('[finish] ', model, f' - learning time: {(datetime.now().timestamp() - start_time)/60} (min)', '\n')
             jj+=1
         return res
     
@@ -93,7 +98,7 @@ class scientificReports():
             pass
         else:
             os.mkdir(saved_path)
-        s = datetime.datetime.now()
+        s = datetime.now()
         path = saved_path + 'report_' + f'{s.year}-{str(s.month).zfill(2)}-{str(s.day).zfill(2)}_{str(s.hour).zfill(2)}{str(s.minute).zfill(2)}{str(s.second).zfill(2)}'+'.csv'
         tab.to_csv(path)
     
