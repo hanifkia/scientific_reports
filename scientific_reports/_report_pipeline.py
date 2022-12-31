@@ -7,13 +7,14 @@ from datetime import datetime
 from sklearn.model_selection import RepeatedStratifiedKFold, train_test_split
 
 class scientificReports():
-    def __init__(self, model_dict, metrics_dict, scalers_list = [], n_splits=10, n_repeats=3, verbose=1):
+    def __init__(self, model_dict, metrics_dict, scalers_list = [], n_splits=10, n_repeats=3, verbose=1, desc=''):
         self.model_dict = model_dict
         self.metrics_dict = metrics_dict
         self.scalers_list = scalers_list
         self.n_splits = n_splits
         self.n_repeats = n_repeats
         self.verbose = verbose
+        self.desc = desc
     
     def __scale__(self, xTrain, xTest):
         for s in self.scalers_list:
@@ -99,7 +100,7 @@ class scientificReports():
         else:
             os.mkdir(saved_path)
         s = datetime.now()
-        path = saved_path + 'report_' + f'{s.year}-{str(s.month).zfill(2)}-{str(s.day).zfill(2)}_{str(s.hour).zfill(2)}{str(s.minute).zfill(2)}{str(s.second).zfill(2)}'+'.csv'
+        path = saved_path + 'report_' + f'{s.year}-{str(s.month).zfill(2)}-{str(s.day).zfill(2)}_{str(s.hour).zfill(2)}{str(s.minute).zfill(2)}{str(s.second).zfill(2)}'+self.desc+'.csv'
         tab.to_csv(path)
     
     def run(self, X, Y, tab = None, save=False):
