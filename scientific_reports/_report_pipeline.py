@@ -40,12 +40,10 @@ class scientificReports():
         for train_index, test_index in rskf.split(X, Y):
             if self.verbose == 1:
                 print(f'*********** fold {self.n_splits*self.n_repeats} / {jj} ***********')
+            elif self.verbose == 2:
+                print(f'fold {self.n_splits*self.n_repeats} / {jj}')
             x_train, y_train = X[train_index], Y[train_index]
-            x_test, y_test = X[test_index], Y[test_index]
-        # for i in range(self.n_splits*self.n_repeats):
-        #     print(f'*********** Fold {self.n_splits*self.n_repeats} / {jj} ***********')
-        #     x_train, x_test, y_train, y_test = train_test_split(X, Y, shuffle=True, train_size=0.8, stratify= Y)
-        
+            x_test, y_test = X[test_index], Y[test_index]        
             
             # scaling
             if len(self.scalers_list) != 0:
@@ -72,26 +70,18 @@ class scientificReports():
                         res[model][metric].append(self.metrics_dict[metric]['func'](*performance_tuple, **self.metrics_dict[metric]['params']))
                         
                 if self.verbose == 1:      
-                    print('[finish] ', model, f' - learning time: {(datetime.now().timestamp() - start_time)/60} (min)', '\n')
+                    print('[finish] ', model, f' : learning time: {round(datetime.now().timestamp() - start_time)} (seconds)', '\n')
             jj+=1
         return res
     
-    def get_table(self, d, status = 'all'):
+    def get_table(self, d):
         res = copy.deepcopy(d)
         for item in res.keys():
             for met in res[item].keys():
                 tmp1 = 1 if met == 'MCC' else 100
                 tmp2 = 2 if met == 'MCC' else 1
-                if status == 'all':
-                    res[item][met] = '{} (\u00B1{})'.format(round((np.mean(res[item][met]) * tmp1), tmp2) , round(np.std(res[item][met]) * tmp1 , tmp2))
-                elif (type(status) == int and status < 2) or status == 'max':
-                    res[item][met].sort(reverse =True)
-                    res[item][met] = '{}'.format(round((np.mean(res[item][met][0]) * tmp1), tmp2))
-                elif type(status) == int and status >= 2:
-                    res[item][met].sort(reverse =True)
-                    res[item][met] = '{} (\u00B1{})'.format(round((np.mean(res[item][met][:status]) * tmp1), tmp2) , round(np.std(res[item][met][:status]) * tmp1 , tmp2))
-                else:
-                    break
+                # +/- : \u00B1
+                res[item][met] = f'{round((np.mean(res[item][met]) * tmp1), tmp2)} (se: {round(((np.std(res[item][met]) / (np.sqrt(self.n_splits*self.n_repeats))) * tmp1), tmp2)})'
         return pd.DataFrame(res).T
     
     def saveTab(self, tab, saved_path = './reports/'):
@@ -103,10 +93,10 @@ class scientificReports():
         path = saved_path + 'report_' + f'{s.year}-{str(s.month).zfill(2)}-{str(s.day).zfill(2)}_{str(s.hour).zfill(2)}{str(s.minute).zfill(2)}{str(s.second).zfill(2)}'+self.desc+'.csv'
         tab.to_csv(path)
     
-    def run(self, X, Y, tab = None, save=False):
+    def run(self, X, Y, tab = False, save=False):
         self.res = self.__pipeline(X, Y)
-        if tab != None:
-            rep = self.get_table(self.res, status=tab)
+        if tab:
+            rep = self.get_table(self.res)
             if save == True:
                 self.saveTab(rep)
             return rep
